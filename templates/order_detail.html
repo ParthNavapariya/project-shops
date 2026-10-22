@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Order #{{ order.order_number }} | ReWear AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="max-w-900 mx-auto">
+        <!-- Breadcrumb / Back -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <a href="{{ url_for('orders') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-arrow-left me-1"></i> Back to Orders
+            </a>
+            <span class="badge bg-light text-muted border px-3 py-2 rounded-pill small">
+                Order Placed: {{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+            </span>
+        </div>
+
+        <!-- Top Order Info Card -->
+        <div class="card border-0 rounded-4 shadow-sm p-4 bg-white mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 pb-3 border-bottom">
+                <div>
+                    <span class="badge {% if order.order_type == 'Rent' %}bg-primary text-white{% else %}bg-dark text-white{% endif %} rounded-pill mb-1">
+                        {{ order.order_type }} Order
+                    </span>
+                    <h2 class="h4 fw-bold mb-0">Order #{{ order.order_number }}</h2>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-success-subtle text-success fs-6 px-3 py-2 rounded-pill">
+                        <i class="bi bi-check-circle-fill me-1"></i> {{ order.order_status }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Visual Tracking Timeline -->
+            <div class="order-tracker-timeline my-4">
+                <div class="order-step completed">
+                    <div class="step-bubble"><i class="bi bi-check-lg"></i></div>
+                    <div class="step-label">Order Confirmed</div>
+                </div>
+                <div class="order-step {% if order.order_status in ('Processing', 'Shipped', 'Delivered', 'Rental Active', 'Return Initiated', 'Completed') %}completed{% else %}current{% endif %}">
+                    <div class="step-bubble"><i class="bi bi-shield-check"></i></div>
+                    <div class="step-label">Eco-Sanitized & Inspected</div>
+                </div>
+                <div class="order-step {% if order.order_status in ('Shipped', 'Delivered', 'Rental Active', 'Return Initiated', 'Completed') %}completed{% elif order.order_status == 'Processing' %}current{% endif %}">
+                    <div class="step-bubble"><i class="bi bi-truck"></i></div>
+                    <div class="step-label">Dispatched</div>
+                </div>
+                <div class="order-step {% if order.order_status in ('Delivered', 'Rental Active', 'Return Initiated', 'Completed') %}completed{% elif order.order_status == 'Shipped' %}current{% endif %}">
+                    <div class="step-bubble"><i class="bi bi-house-door"></i></div>
+                    <div class="step-label">{% if order.order_type == 'Rent' %}Rental In Custody{% else %}Delivered{% endif %}</div>
+                </div>
+                <div class="order-step {% if order.order_status in ('Return Initiated', 'Completed') %}completed{% elif order.order_status == 'Rental Active' %}current{% endif %}">
+                    <div class="step-bubble"><i class="bi bi-arrow-return-left"></i></div>
+                    <div class="step-label">Return & Deposit Refund</div>
+                </div>
+            </div>
+
+            <!-- Courier Details -->
+            <div class="row g-3 p-3 bg-light rounded-3 mt-2">
+                <div class="col-md-4">
+                    <div class="small text-muted">Tracking Code</div>
+                    <div class="fw-bold text-dark font-monospace">{{ order.tracking_number or 'ECO-TRK-7712093' }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="small text-muted">Logistics Carrier</div>
+                    <div class="fw-bold text-dark">{{ order.courier_partner }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="small text-muted">Estimated Delivery</div>
+                    <div class="fw-bold text-success">{{ order.estimated_delivery or 'Within 2-3 Business Days' }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Item & Financial Breakdown -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-7">
+                <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100">
+                    <h5 class="fw-bold mb-3">Garment Information</h5>
+                    <div class="d-flex gap-3">
+                        <img src="{{ order.product.primary_image }}" alt="{{ order.product.title }}" class="rounded-3 shadow-sm" style="width: 100px; height: 125px; object-fit: cover;">
+                        <div>
+                            <div class="product-brand mb-1">{{ order.product.brand }}</div>
+                            <h6 class="fw-bold mb-1">
+                                <a href="{{ url_for('product_detail', product_id=order.product.id) }}">{{ order.product.title }}</a>
+                            </h6>
+                            <div class="small text-muted mb-2">
+                                Size: <strong>{{ order.product.size }}</strong> &bull; Color: <strong>{{ order.product.color }}</strong> &bull; {{ order.product.condition }}
+                            </div>
+                            <span class="badge bg-success-subtle text-success small">
+                                <i class="bi bi-tree"></i> {{ order.product.co2_saved_kg }} kg CO₂ Saved
+                            </span>
+                        </div>
+                    </div>
+
+                    {% if order.rental_detail %}
+                    <div class="alert alert-primary rounded-3 mt-4 mb-0">
+                        <div class="fw-bold small mb-1"><i class="bi bi-calendar-range me-1"></i> Rental Period Details:</div>
+                        <div class="small">
+                            Active from <strong>{{ order.rental_detail.start_date }}</strong> to <strong class="text-danger">{{ order.rental_detail.end_date }}</strong> ({{ order.rental_detail.total_days }} days).
+                            Return by end date using prepaid box included.
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Financial Summary & Return Action -->
+            <div class="col-lg-5">
+                <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100">
+                    <h5 class="fw-bold mb-3">Payment Summary</h5>
+
+                    <div class="d-flex justify-content-between small text-muted mb-2">
+                        <span>Item / Rental Cost:</span>
+                        <strong class="text-dark">${{ "%.2f"|format(order.item_price) }}</strong>
+                    </div>
+                    {% if order.security_deposit > 0 %}
+                    <div class="d-flex justify-content-between small text-muted mb-2">
+                        <span>Refundable Security Deposit:</span>
+                        <strong class="text-primary">${{ "%.2f"|format(order.security_deposit) }}</strong>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex justify-content-between small text-muted mb-2">
+                        <span>Insured Delivery:</span>
+                        <strong class="text-dark">${{ "%.2f"|format(order.shipping_fee) }}</strong>
+                    </div>
+                    <hr class="my-3">
+                    <div class="d-flex justify-content-between align-items-baseline mb-3">
+                        <span class="fw-bold">Total Paid:</span>
+                        <span class="h4 fw-bold text-dark mb-0">${{ "%.2f"|format(order.total_amount) }}</span>
+                    </div>
+
+                    <div class="small text-muted mb-4">
+                        Payment Method: <strong>{{ order.payment_method }}</strong> (Status: <span class="text-success fw-bold">{{ order.payment_status }}</span>)
+                    </div>
+
+                    <!-- Return Management Action -->
+                    {% if order.return_request %}
+                    <div class="p-3 bg-light rounded-3 border">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="badge bg-warning text-dark">{{ order.return_request.status }}</span>
+                            <span class="small text-muted font-monospace">{{ order.return_request.return_tracking_id }}</span>
+                        </div>
+                        <div class="small text-muted mt-2">Reason: {{ order.return_request.reason }}</div>
+                        <div class="small text-success mt-1">Prepaid shipping label generated. Awaiting courier scan.</div>
+                    </div>
+                    {% else %}
+                    <button class="btn btn-outline-danger w-100 rounded-pill py-2" data-bs-toggle="modal" data-bs-target="#returnModal">
+                        <i class="bi bi-arrow-return-left me-1"></i> {% if order.order_type == 'Rent' %}Initiate Rental Return{% else %}Request Return / Refund{% endif %}
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Shipping Address Details -->
+        <div class="card border-0 rounded-4 shadow-sm p-4 bg-white">
+            <h5 class="fw-bold mb-2">Delivery Address</h5>
+            <p class="text-muted small mb-0">
+                {{ order.shipping_address }}<br>
+                {{ order.city }}, {{ order.postal_code }}<br>
+                Recipient Contact: {{ order.contact_phone }}
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Return Request Modal -->
+<div class="modal fade" id="returnModal" tabindex="-1" aria-labelledby="returnModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold" id="returnModalLabel">
+                    <i class="bi bi-box-arrow-in-left text-danger me-2"></i> Initiate Return Pickup
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('process_return', order_id=order.id) }}" method="POST">
+                <div class="modal-body p-4">
+                    <p class="small text-muted mb-3">
+                        We generate a prepaid carbon-neutral return shipping label. Our courier partner will collect the garment from your address.
+                    </p>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Return Reason *</label>
+                        <select name="reason" class="form-select rounded-3" required>
+                            {% if order.order_type == 'Rent' %}
+                            <option value="Rental Period Completed" selected>Rental Period Completed (Event over)</option>
+                            <option value="Event Cancelled">Event Cancelled Early</option>
+                            <option value="Size Fit Issue">Size did not fit properly</option>
+                            {% else %}
+                            <option value="Size Did Not Fit">Size did not fit as expected</option>
+                            <option value="Condition Mismatch">Condition did not match disclosure</option>
+                            <option value="Changed Mind">Changed Mind within 7-Day Window</option>
+                            {% endif %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Additional Notes (Optional)</label>
+                        <textarea name="notes" rows="2" class="form-control rounded-3" placeholder="Any packaging or garment details..."></textarea>
+                    </div>
+
+                    <div class="p-3 rounded-3 bg-light border small text-muted">
+                        <i class="bi bi-info-circle text-primary me-1"></i>
+                        {% if order.order_type == 'Rent' %}
+                        Your security deposit of <strong>${{ "%.2f"|format(order.security_deposit) }}</strong> will be refunded within 24 hours of sanitization inspection.
+                        {% else %}
+                        Your refund of <strong>${{ "%.2f"|format(order.item_price) }}</strong> will be credited to your original payment method.
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer border-top p-3">
+                    <button type="button" class="btn btn-sm btn-light rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-danger rounded-pill px-4">Generate Return Label</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

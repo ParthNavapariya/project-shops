@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}AI Fashion Valuation Lab | Machine Learning Resale & Rental Engine{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="text-center max-w-700 mx-auto mb-5">
+        <span class="badge bg-success-subtle text-success fw-bold text-uppercase px-3 py-2 rounded-pill mb-2">
+            <i class="bi bi-cpu-fill"></i> Scikit-Learn Model Studio
+        </span>
+        <h1 class="display-6 fw-bold">Fashion Machine Learning Valuation Lab</h1>
+        <p class="text-muted">
+            Test our trained Gradient Boosting algorithm with custom garment parameters. Discover estimated fair resale prices, daily rental yield, and projected 4-year depreciation curves.
+        </p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Interactive Controls Card -->
+        <div class="col-lg-5">
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-sliders text-success me-2"></i> Garment Parameters</h5>
+                    <button type="button" id="btn-reset-lab" class="btn btn-sm btn-link text-muted p-0 text-decoration-none">Reset</button>
+                </div>
+
+                <form id="ai-lab-form">
+                    <!-- Brand -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Brand / Designer</label>
+                        <select id="lab_brand" class="form-select rounded-3">
+                            {% for b in brands %}
+                            <option value="{{ b }}" {% if b == 'Burberry' %}selected{% endif %}>{{ b }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text small" style="font-size: 0.74rem;">Luxury brands have high resale retention multipliers.</div>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Apparel Category</label>
+                        <select id="lab_category" class="form-select rounded-3">
+                            {% for cat in categories %}
+                            <option value="{{ cat.name }}" {% if cat.name == 'Jackets & Coats' %}selected{% endif %}>{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Original Retail Price -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <label class="form-label small fw-bold text-muted">Original Retail MSRP ($)</label>
+                            <span id="lab_retail_val" class="small fw-bold text-primary">$1,250</span>
+                        </div>
+                        <input type="range" class="form-range" id="lab_original_price" min="50" max="4000" step="25" value="1250">
+                    </div>
+
+                    <!-- Garment Age -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <label class="form-label small fw-bold text-muted">Garment Age (Months)</label>
+                            <span id="lab_age_val" class="small fw-bold text-dark">14 months</span>
+                        </div>
+                        <input type="range" class="form-range" id="lab_age_months" min="1" max="48" step="1" value="14">
+                    </div>
+
+                    <!-- Condition -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Condition Grade</label>
+                        <select id="lab_condition" class="form-select rounded-3">
+                            <option value="Brand New with Tags">Brand New with Tags (BNWT)</option>
+                            <option value="Like New" selected>Like New (Worn 1-2 times, mint)</option>
+                            <option value="Gently Used">Gently Used (Minor signs of normal wear)</option>
+                            <option value="Fair / Well Used">Fair / Well Used (Visible wear)</option>
+                        </select>
+                    </div>
+
+                    <!-- Material -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-muted">Primary Material</label>
+                            <select id="lab_material" class="form-select form-select-sm rounded-3">
+                                <option value="Leather">Leather / Suede</option>
+                                <option value="Cashmere">Cashmere</option>
+                                <option value="Silk">Silk / Satin</option>
+                                <option value="Wool">Virgin Wool</option>
+                                <option value="Cotton" selected>Cotton Gabardine</option>
+                                <option value="Denim">Selvedge Denim</option>
+                                <option value="Polyester">Polyester / Synthetic</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-muted">Wear Frequency</label>
+                            <select id="lab_usage" class="form-select form-select-sm rounded-3">
+                                <option value="Rarely" selected>Rarely (Occasions)</option>
+                                <option value="Occasionally">Occasionally</option>
+                                <option value="Frequently">Frequently</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="button" id="btn-run-lab" class="btn btn-luxury w-100 py-3 rounded-pill">
+                        <i class="bi bi-cpu-fill me-1"></i> Compute Fair Valuation with AI
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Output Analytics & Chart.js Visualizer -->
+        <div class="col-lg-7">
+            <!-- Summary Metric Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="card border-0 rounded-4 shadow-sm p-3 bg-white h-100 border-start border-success border-4">
+                        <div class="small text-muted text-uppercase fw-bold">Fair Resale Price</div>
+                        <div id="out_fair_price" class="display-6 fw-bold text-success">$560.00</div>
+                        <div id="out_price_range" class="small text-muted">Recommended: $492 &ndash; $627</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 rounded-4 shadow-sm p-3 bg-white h-100 border-start border-primary border-4">
+                        <div class="small text-muted text-uppercase fw-bold">Suggested Daily Rental</div>
+                        <div id="out_daily_rent" class="display-6 fw-bold text-primary">$21.50 <span class="fs-6 text-muted">/ day</span></div>
+                        <div id="out_deposit" class="small text-muted">Security Deposit: $250.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart.js Depreciation Over Time -->
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-graph-down text-success me-2"></i> 48-Month Residual Value & Rental Yield Curve</h6>
+                    <span class="badge bg-light text-muted border">Dynamic Curve</span>
+                </div>
+                <div style="height: 280px;">
+                    <canvas id="labDepreciationChart"></canvas>
+                </div>
+                <div class="d-flex justify-content-between small text-muted mt-2">
+                    <span>Month 0 (Retail MSRP)</span>
+                    <span>Month 24 (Resale Plateau)</span>
+                    <span>Month 48 (Archival Vintage)</span>
+                </div>
+            </div>
+
+            <!-- Circular Economy & Breakeven Insight -->
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white">
+                <h6 class="fw-bold mb-3"><i class="bi bi-arrow-repeat text-success me-2"></i> Rental Breakeven & Circular Metrics</h6>
+                <div class="row g-3 text-center">
+                    <div class="col-sm-4">
+                        <div class="p-3 bg-light rounded-3">
+                            <div id="out_breakeven_days" class="h4 fw-bold text-dark mb-0">26 days</div>
+                            <div class="small text-muted">Rental Days to 100% ROI</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="p-3 bg-light rounded-3">
+                            <div id="out_co2_kg" class="h4 fw-bold text-success mb-0">18.5 kg</div>
+                            <div class="small text-muted">CO₂ Diverted from Air</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="p-3 bg-light rounded-3">
+                            <div id="out_water_liters" class="h4 fw-bold text-primary mb-0">5,200 L</div>
+                            <div class="small text-muted">Clean Water Conserved</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const rangeRetail = document.getElementById('lab_original_price');
+    const labelRetail = document.getElementById('lab_retail_val');
+    const rangeAge = document.getElementById('lab_age_months');
+    const labelAge = document.getElementById('lab_age_val');
+    const btnRun = document.getElementById('btn-run-lab');
+
+    rangeRetail.addEventListener('input', () => {
+        labelRetail.textContent = `$${parseInt(rangeRetail.value).toLocaleString()}`;
+    });
+
+    rangeAge.addEventListener('input', () => {
+        labelAge.textContent = `${rangeAge.value} months`;
+    });
+
+    async function computeValuation() {
+        btnRun.disabled = true;
+        btnRun.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Calculating via Gradient Boosting...';
+
+        const params = {
+            brand: document.getElementById('lab_brand').value,
+            category: document.getElementById('lab_category').value,
+            original_price: parseFloat(rangeRetail.value),
+            age_months: parseInt(rangeAge.value),
+            condition: document.getElementById('lab_condition').value,
+            usage_frequency: document.getElementById('lab_usage').value,
+            material: document.getElementById('lab_material').value
+        };
+
+        const res = await requestAiEstimation(params);
+        btnRun.disabled = false;
+        btnRun.innerHTML = '<i class="bi bi-cpu-fill me-1"></i> Compute Fair Valuation with AI';
+
+        if (res) {
+            document.getElementById('out_fair_price').textContent = `$${res.fair_resale_price.toFixed(2)}`;
+            document.getElementById('out_price_range').textContent = `Recommended: $${res.min_price.toFixed(0)} – $${res.max_price.toFixed(0)}`;
+            document.getElementById('out_daily_rent').innerHTML = `$${res.daily_rental_rate.toFixed(2)} <span class="fs-6 text-muted">/ day</span>`;
+            document.getElementById('out_deposit').textContent = `Security Deposit: $${res.security_deposit.toFixed(2)}`;
+            
+            // Breakeven math
+            const breakeven = Math.ceil(res.fair_resale_price / res.daily_rental_rate);
+            document.getElementById('out_breakeven_days').textContent = `${breakeven} days`;
+            document.getElementById('out_co2_kg').textContent = `${res.co2_saved_kg} kg`;
+            document.getElementById('out_water_liters').textContent = `${res.water_saved_liters.toLocaleString()} L`;
+
+            if (res.timeline) {
+                renderDepreciationChart('labDepreciationChart', res.timeline);
+            }
+        }
+    }
+
+    btnRun.addEventListener('click', computeValuation);
+    document.getElementById('btn-reset-lab').addEventListener('click', () => {
+        rangeRetail.value = 1250;
+        labelRetail.textContent = '$1,250';
+        rangeAge.value = 14;
+        labelAge.textContent = '14 months';
+        computeValuation();
+    });
+
+    // Initial run
+    computeValuation();
+});
+</script>
+{% endblock %}

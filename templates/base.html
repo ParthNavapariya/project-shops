@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ReWear AI | Circular Luxury Fashion & Rental System{% endblock %}</title>
+    <meta name="description" content="AI-powered pre-owned fashion marketplace and rental platform with machine learning fair price estimation, sustainability tracking, and circular fashion reuse.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Custom Design System Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+
+    <!-- Main Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-rewear sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="bi bi-recycle text-success fs-3"></i>
+                <span>ReWear</span>
+                <span class="brand-badge">AI Valued</span>
+            </a>
+            
+            <button class="navbar-toggler border-0" type="button" data-bs-dismiss="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'marketplace' and not request.args.get('mode') %}active{% endif %}" href="{{ url_for('marketplace') }}">
+                            <i class="bi bi-grid-fill me-1"></i> Explore All
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.args.get('mode') == 'buy' %}active{% endif %}" href="{{ url_for('marketplace', mode='buy') }}">
+                            <i class="bi bi-bag-check me-1"></i> Buy Pre-Owned
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.args.get('mode') == 'rent' %}active{% endif %}" href="{{ url_for('marketplace', mode='rent') }}">
+                            <i class="bi bi-calendar2-range me-1 text-primary"></i> Rent Fashion
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'ai_lab' %}active{% endif %}" href="{{ url_for('ai_lab') }}">
+                            <i class="bi bi-cpu text-success me-1"></i> AI Valuation Lab
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'eco_impact' %}active{% endif %}" href="{{ url_for('eco_impact') }}">
+                            <i class="bi bi-globe-americas text-success me-1"></i> Eco-Impact
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Global Search Form -->
+                <form class="d-flex me-3" action="{{ url_for('marketplace') }}" method="GET">
+                    <div class="input-group">
+                        <input class="form-control form-control-sm rounded-start-pill ps-3 bg-light border-0" type="search" name="q" placeholder="Search brand, dress, jacket..." value="{{ request.args.get('q', '') }}" style="width: 190px;">
+                        <button class="btn btn-sm btn-light rounded-end-pill px-3 text-muted" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Action Links & User Dropdown -->
+                <div class="d-flex align-items-center gap-2">
+                    <!-- Wishlist Link -->
+                    <a href="{{ url_for('wishlist') }}" class="btn btn-sm btn-outline-light text-dark position-relative p-2" title="Wishlist">
+                        <i class="bi bi-heart fs-6"></i>
+                        <span id="nav-wishlist-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: {% if wishlist_count > 0 %}inline-flex{% else %}none{% endif %}; font-size: 0.65rem;">
+                            {{ wishlist_count }}
+                        </span>
+                    </a>
+
+                    <!-- Comparison Link -->
+                    <a href="{{ url_for('compare') }}" class="btn btn-sm btn-outline-light text-dark position-relative p-2" title="Compare Items">
+                        <i class="bi bi-arrow-left-right fs-6"></i>
+                        <span id="nav-compare-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="display: {% if compare_count > 0 %}inline-flex{% else %}none{% endif %}; font-size: 0.65rem;">
+                            {{ compare_count }}
+                        </span>
+                    </a>
+
+                    <!-- Sell CTA -->
+                    <a href="{{ url_for('sell') }}" class="btn btn-sm btn-luxury">
+                        <i class="bi bi-plus-circle me-1"></i> List Item
+                    </a>
+
+                    <!-- User Account / Login -->
+                    {% if current_user %}
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-light text-dark dropdown-toggle d-flex align-items-center gap-2 p-1 pe-2 rounded-pill border" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="{{ current_user.profile_pic }}" alt="{{ current_user.name }}" class="rounded-circle" width="28" height="28" style="object-fit: cover;">
+                                <span class="fw-semibold small d-none d-md-inline">{{ current_user.name.split()[0] }}</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-2">
+                                <li class="px-3 py-2 border-bottom">
+                                    <div class="fw-bold">{{ current_user.name }}</div>
+                                    <div class="small text-muted">{{ current_user.email }}</div>
+                                    <div class="badge bg-success-subtle text-success mt-1">
+                                        <i class="bi bi-leaf me-1"></i> {{ current_user.eco_points or 50 }} Eco Points
+                                    </div>
+                                </li>
+                                <li><a class="dropdown-item py-2" href="{{ url_for('orders') }}"><i class="bi bi-box-seam me-2 text-primary"></i> My Orders & Rentals</a></li>
+                                <li><a class="dropdown-item py-2" href="{{ url_for('seller_dashboard') }}"><i class="bi bi-speedometer2 me-2 text-warning"></i> Seller Dashboard</a></li>
+                                <li><a class="dropdown-item py-2" href="{{ url_for('wishlist') }}"><i class="bi bi-heart me-2 text-danger"></i> Saved Items</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item py-2 text-danger" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right me-2"></i> Sign Out</a></li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline-luxury">Sign In</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Category Sub-Navigation Strip -->
+    <div class="category-strip">
+        <div class="container d-flex align-items-center">
+            <span class="small fw-bold text-uppercase text-muted me-3 d-none d-md-inline" style="font-size: 0.72rem; letter-spacing: 0.05em;">Curated:</span>
+            <div class="d-flex align-items-center overflow-auto py-1">
+                <a href="{{ url_for('marketplace') }}" class="cat-chip {% if not request.args.get('category') %}active{% endif %}">
+                    <i class="bi bi-stars"></i> All Collections
+                </a>
+                {% for cat in nav_categories %}
+                <a href="{{ url_for('marketplace', category=cat.slug) }}" class="cat-chip {% if request.args.get('category') == cat.slug %}active{% endif %}">
+                    <i class="bi {{ cat.icon }}"></i> {{ cat.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    <div class="container mt-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show rounded-4 shadow-sm border-0 d-flex align-items-center gap-2" role="alert">
+                        {% if category == 'success' %}
+                            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                        {% elif category == 'danger' %}
+                            <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
+                        {% else %}
+                            <i class="bi bi-info-circle-fill text-primary fs-5"></i>
+                        {% endif %}
+                        <div>{{ message }}</div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Floating Comparison Dock (Active when items selected) -->
+    {% if session.get('compare_ids') and session['compare_ids']|length > 0 %}
+    <div id="comparison-floating-dock" class="comparison-floating-dock">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-arrow-left-right text-success"></i>
+            <span class="fw-bold">{{ session['compare_ids']|length }} item(s) in Comparison</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ url_for('compare') }}" class="btn btn-sm btn-eco">View Comparison</a>
+            <a href="{{ url_for('clear_compare') }}" class="btn btn-sm text-white-50" title="Clear All"><i class="bi bi-x-circle"></i></a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <footer class="footer-rewear">
+        <div class="container">
+            <div class="row g-4 mb-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <i class="bi bi-recycle text-success fs-2"></i>
+                        <span class="brand-font fs-3 text-white">ReWear AI</span>
+                    </div>
+                    <p class="small text-muted pe-lg-4">
+                        The next-generation circular fashion marketplace and rental system powered by Machine Learning. We compute fair market prices, authenticate luxury pieces, and divert clothing from landfills.
+                    </p>
+                    <div class="d-flex gap-3 mt-3">
+                        <a href="#" class="text-secondary fs-5"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="text-secondary fs-5"><i class="bi bi-twitter-x"></i></a>
+                        <a href="#" class="text-secondary fs-5"><i class="bi bi-linkedin"></i></a>
+                        <a href="#" class="text-secondary fs-5"><i class="bi bi-github"></i></a>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-3 col-6">
+                    <h5>Marketplace</h5>
+                    <a href="{{ url_for('marketplace') }}" class="footer-link">Browse Catalog</a>
+                    <a href="{{ url_for('marketplace', mode='buy') }}" class="footer-link">Buy Pre-Owned</a>
+                    <a href="{{ url_for('marketplace', mode='rent') }}" class="footer-link">Rent Designer Wear</a>
+                    <a href="{{ url_for('marketplace', deal='great') }}" class="footer-link">AI Spotlight Deals</a>
+                    <a href="{{ url_for('compare') }}" class="footer-link">Product Comparison</a>
+                </div>
+
+                <div class="col-lg-2 col-md-3 col-6">
+                    <h5>AI & Platform</h5>
+                    <a href="{{ url_for('ai_lab') }}" class="footer-link">AI Price Estimator</a>
+                    <a href="{{ url_for('sell') }}" class="footer-link">List with AI Assistant</a>
+                    <a href="{{ url_for('eco_impact') }}" class="footer-link">Carbon & Water Tracker</a>
+                    <a href="{{ url_for('orders') }}" class="footer-link">Rental Returns</a>
+                    <a href="{{ url_for('seller_dashboard') }}" class="footer-link">Seller Analytics</a>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <h5>Sustainable Fashion Mission</h5>
+                    <p class="small text-muted">
+                        Every pre-owned purchase or rental prevents an average of <strong>8.5 kg CO₂</strong> and saves <strong>3,200 liters of water</strong> compared to new clothing manufacturing.
+                    </p>
+                    <div class="p-3 rounded-4 bg-dark border border-secondary border-opacity-25 mt-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="small text-white-50">Community Sustainability Goal</span>
+                            <span class="small text-success fw-bold">78% Reached</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 78%;" aria-valuenow="78" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 mt-4 border-top border-secondary border-opacity-25 d-flex flex-column flex-md-row justify-content-between align-items-center small text-muted">
+                <div>&copy; {{ now.year }} ReWear AI. Designed for Innovative Circular Fashion & Sustainable Clothing Reuse.</div>
+                <div class="d-flex gap-3 mt-2 mt-md-0">
+                    <a href="#" class="text-muted">Privacy Policy</a>
+                    <a href="#" class="text-muted">Terms of Service</a>
+                    <a href="#" class="text-muted">Rental Agreement</a>
+                    <a href="#" class="text-muted">AI Ethics & Valuation</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js CDN for data visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    
+    <!-- Custom Scripts -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ai_estimator.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/rental_picker.js') }}"></script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

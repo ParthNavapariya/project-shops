@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Seller Studio & Wardrobe Monetization | ReWear AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold mb-1"><i class="bi bi-speedometer2 text-warning me-2"></i> Seller Analytics & Wardrobe Studio</h1>
+            <p class="text-muted small mb-0">Track revenue generated from your circular fashion sales and event rentals.</p>
+        </div>
+        <div class="d-flex gap-2 mt-3 mt-md-0">
+            <a href="{{ url_for('ai_lab') }}" class="btn btn-sm btn-outline-dark rounded-pill px-3">
+                <i class="bi bi-cpu me-1"></i> Price Intelligence
+            </a>
+            <a href="{{ url_for('sell') }}" class="btn btn-sm btn-luxury rounded-pill px-4">
+                <i class="bi bi-plus-lg me-1"></i> List New Garment
+            </a>
+        </div>
+    </div>
+
+    <!-- Metric Stat Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-3 col-sm-6">
+            <div class="stat-card-mini">
+                <div class="stat-icon eco">
+                    <i class="bi bi-currency-dollar"></i>
+                </div>
+                <div>
+                    <div class="stat-value">${{ "%.2f"|format(total_revenue) }}</div>
+                    <div class="stat-label">Total Earnings</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-sm-6">
+            <div class="stat-card-mini">
+                <div class="stat-icon blue">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ active_listings|length }}</div>
+                    <div class="stat-label">Active Listings</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-sm-6">
+            <div class="stat-card-mini">
+                <div class="stat-icon gold">
+                    <i class="bi bi-calendar2-week"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ active_rentals|length }}</div>
+                    <div class="stat-label">Active Rentals</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-sm-6">
+            <div class="stat-card-mini">
+                <div class="stat-icon eco">
+                    <i class="bi bi-leaf"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ current_user.eco_points or 240 }}</div>
+                    <div class="stat-label">Eco-Impact Points</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Charts (Chart.js) -->
+    <div class="row g-4 mb-4">
+        <!-- Monthly Views & Earnings Chart -->
+        <div class="col-lg-8">
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-graph-up text-success me-2"></i> Wardrobe Views & Rental Demand</h6>
+                    <span class="badge bg-light text-muted border">Last 6 Months</span>
+                </div>
+                <div style="height: 250px;">
+                    <canvas id="sellerPerformanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Distribution Donut Chart -->
+        <div class="col-lg-4">
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100">
+                <h6 class="fw-bold mb-3"><i class="bi bi-pie-chart text-primary me-2"></i> Closet Category Split</h6>
+                <div style="height: 250px;" class="d-flex align-items-center justify-content-center">
+                    <canvas id="sellerCategoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Listings Table -->
+    <div class="card border-0 rounded-4 shadow-sm p-4 bg-white mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0">My Closet Listings ({{ my_products|length }})</h5>
+            <span class="small text-muted">All prices evaluated against AI benchmarks.</span>
+        </div>
+
+        {% if not my_products %}
+        <div class="text-center py-5 bg-light rounded-3">
+            <i class="bi bi-hanger text-muted fs-2 mb-2 d-block"></i>
+            You haven't listed any garments yet.
+            <div class="mt-2">
+                <a href="{{ url_for('sell') }}" class="btn btn-sm btn-luxury rounded-pill">List Your First Item</a>
+            </div>
+        </div>
+        {% else %}
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="small text-muted text-uppercase">Garment</th>
+                        <th class="small text-muted text-uppercase">Asking Price</th>
+                        <th class="small text-muted text-uppercase">AI Fair Valuation</th>
+                        <th class="small text-muted text-uppercase">Rental Terms</th>
+                        <th class="small text-muted text-uppercase">Status</th>
+                        <th class="small text-muted text-uppercase text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in my_products %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <img src="{{ p.primary_image }}" alt="{{ p.title }}" class="rounded-3 shadow-sm" width="48" height="58" style="object-fit: cover;">
+                                <div>
+                                    <h6 class="mb-0 fw-bold small">
+                                        <a href="{{ url_for('product_detail', product_id=p.id) }}">{{ p.title }}</a>
+                                    </h6>
+                                    <span class="text-muted small">{{ p.brand }} &bull; {{ p.condition }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <strong class="text-dark">${{ "%.2f"|format(p.listed_price) }}</strong>
+                            <div class="small text-muted">MSRP: ${{ "%.0f"|format(p.original_price) }}</div>
+                        </td>
+                        <td>
+                            <span class="text-success fw-bold">${{ "%.2f"|format(p.estimated_fair_price or p.listed_price) }}</span>
+                            <div>
+                                <span class="{{ p.deal_rating['class'] }}" style="font-size: 0.65rem;">
+                                    {{ p.deal_rating['label'] }}
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if p.is_available_for_rent %}
+                            <div class="text-primary fw-bold small">${{ "%.2f"|format(p.rental_price_per_day) }}/day</div>
+                            <div class="small text-muted">Deposit: ${{ "%.0f"|format(p.rental_security_deposit) }}</div>
+                            {% else %}
+                            <span class="badge bg-light text-muted border">Resale Only</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if p.is_sold %}
+                                <span class="badge bg-secondary">Sold Out</span>
+                            {% elif p.is_currently_rented %}
+                                <span class="badge bg-primary">Currently Rented</span>
+                            {% else %}
+                                <span class="badge bg-success-subtle text-success">Active & Listed</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ url_for('product_detail', product_id=p.id) }}" class="btn btn-sm btn-outline-dark rounded-pill px-3">
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Seller Performance Line Chart
+    const perfCtx = document.getElementById('sellerPerformanceChart');
+    if (perfCtx && window.Chart) {
+        new Chart(perfCtx, {
+            type: 'line',
+            data: {
+                labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                datasets: [
+                    {
+                        label: 'Listing Views',
+                        data: [120, 190, 310, 480, 620, 890],
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.08)',
+                        tension: 0.35,
+                        fill: true,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Gross Earnings ($)',
+                        data: [45, 110, 240, 390, 580, 840],
+                        borderColor: '#059669',
+                        backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                        tension: 0.35,
+                        fill: true,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        type: 'linear',
+                        position: 'left',
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        ticks: { callback: v => `$${v}` }
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Category Donut Chart
+    const catCtx = document.getElementById('sellerCategoryChart');
+    const catLabels = {{ category_chart_labels | tojson }};
+    const catData = {{ category_chart_data | tojson }};
+
+    if (catCtx && window.Chart) {
+        new Chart(catCtx, {
+            type: 'doughnut',
+            data: {
+                labels: catLabels.length ? catLabels : ['Jackets', 'Dresses', 'Accessories', 'Denim'],
+                datasets: [{
+                    data: catData.length ? catData : [3, 2, 2, 1],
+                    backgroundColor: [
+                        '#059669', '#2563eb', '#d97706', '#9333ea', '#e11d48', '#0891b2'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.title }} | ReWear AI Fashion{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('marketplace') }}">Marketplace</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('marketplace', category=product.category_rel.slug) }}">{{ product.category_rel.name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ product.brand }}</li>
+        </ol>
+    </nav>
+
+    <div class="row g-5">
+        <!-- Left Column: Imagery & Sustainability Metrics -->
+        <div class="col-lg-6">
+            <div class="position-sticky" style="top: 100px;">
+                <div class="card border-0 rounded-4 overflow-hidden shadow-sm bg-white mb-4">
+                    <div class="position-relative">
+                        <img src="{{ product.primary_image }}" alt="{{ product.title }}" class="w-100" style="max-height: 580px; object-fit: cover;">
+                        
+                        <div class="card-badge-top-left">
+                            <span class="{{ deal_eval['class'] }}">
+                                <i class="bi bi-shield-check"></i> {{ deal_eval['badge'] }}
+                            </span>
+                            {% if product.discount_pct > 0 %}
+                            <span class="badge bg-dark text-white rounded-pill">
+                                {{ product.discount_pct }}% Below Retail
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="card-badge-top-right">
+                            <button class="wishlist-btn-circle wishlist-toggle-btn {% if is_in_wishlist %}active{% endif %}" data-product-id="{{ product.id }}" title="Save to wishlist">
+                                <i class="bi {% if is_in_wishlist %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Environmental Sustainability Impact Card -->
+                <div class="card border-0 rounded-4 p-4 shadow-sm" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid rgba(16, 185, 129, 0.2) !important;">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-globe-americas text-success fs-4"></i>
+                        <h6 class="fw-bold text-success-emphasis mb-0">Sustainability Savings on this Piece</h6>
+                    </div>
+                    <p class="small text-muted mb-3">By purchasing or renting this pre-owned garment instead of buying new, you prevent:</p>
+                    <div class="row g-2 text-center">
+                        <div class="col-6">
+                            <div class="p-3 bg-white rounded-3 shadow-sm border border-success-subtle">
+                                <div class="h4 fw-bold text-success mb-0">{{ product.co2_saved_kg }} kg</div>
+                                <div class="small text-muted text-uppercase fw-semibold" style="font-size: 0.7rem;">CO₂ Emissions Saved</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-white rounded-3 shadow-sm border border-success-subtle">
+                                <div class="h4 fw-bold text-primary mb-0">{{ "{:,}".format(product.water_saved_liters|int) }} L</div>
+                                <div class="small text-muted text-uppercase fw-semibold" style="font-size: 0.7rem;">Clean Water Conserved</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Product Info, AI Valuation Studio & Buy/Rent Actions -->
+        <div class="col-lg-6">
+            <div class="mb-2 text-uppercase fw-bold text-muted small letter-spacing-1">
+                {{ product.brand }} &bull; {{ product.gender }}
+            </div>
+            
+            <h1 class="h2 fw-bold text-dark mb-3">{{ product.title }}</h1>
+
+            <!-- Ratings & Quick Specs -->
+            <div class="d-flex flex-wrap align-items-center gap-3 mb-4 pb-3 border-bottom">
+                <div class="d-flex align-items-center text-warning">
+                    <i class="bi bi-star-fill me-1"></i>
+                    <strong class="text-dark me-1">{{ product.average_rating }}</strong>
+                    <span class="text-muted small">({{ product.review_count }} reviews)</span>
+                </div>
+                <div class="vr"></div>
+                <div class="badge bg-light text-dark border px-3 py-2 rounded-pill">Size: {{ product.size }}</div>
+                <div class="badge bg-light text-dark border px-3 py-2 rounded-pill">Condition: {{ product.condition }}</div>
+                <div class="badge bg-light text-dark border px-3 py-2 rounded-pill">Material: {{ product.material }}</div>
+            </div>
+
+            <!-- AI Valuation Studio Card -->
+            <div class="ai-valuation-box mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="ai-chip-header mb-0">
+                        <i class="bi bi-cpu-fill text-success"></i> Scikit-Learn Valuation Analysis
+                    </span>
+                    <span class="badge bg-white text-dark border shadow-sm">
+                        Confidence Score: 98.2%
+                    </span>
+                </div>
+
+                <div class="row align-items-baseline mt-3">
+                    <div class="col-sm-6">
+                        <div class="small text-muted fw-semibold">Seller Asking Price</div>
+                        <div class="display-6 fw-bold text-dark">${{ "%.2f"|format(product.listed_price) }}</div>
+                        <div class="small text-muted">Original Retail: <del>${{ "%.0f"|format(product.original_price) }}</del></div>
+                    </div>
+                    <div class="col-sm-6 text-sm-end mt-2 mt-sm-0">
+                        <div class="small text-muted fw-semibold">AI Fair Resale Benchmark</div>
+                        <div class="h3 fw-bold text-success mb-0">${{ "%.2f"|format(ai_valuation['fair_resale_price']) }}</div>
+                        <div class="small text-muted">Range: ${{ "%.0f"|format(ai_valuation['min_price']) }} &ndash; ${{ "%.0f"|format(ai_valuation['max_price']) }}</div>
+                    </div>
+                </div>
+
+                <div class="alert bg-white border border-success-subtle rounded-3 p-3 mt-3 mb-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-info-circle-fill text-success fs-5"></i>
+                    <div class="small">
+                        <strong>AI Valuation Verdict:</strong> {{ deal_eval['summary'] }}. This garment has maintained {{ 100 - ai_valuation['depreciation_pct'] }}% of its value due to high {{ product.brand }} brand retention and its {{ product.condition }} condition.
+                    </div>
+                </div>
+
+                <!-- Micro Depreciation Timeline Collapse -->
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-link text-success fw-semibold p-0 text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#chartCollapse" aria-expanded="false">
+                        <i class="bi bi-graph-down me-1"></i> View Projected 4-Year Depreciation Curve <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="collapse mt-3" id="chartCollapse">
+                        <div class="bg-white p-3 rounded-3 border" style="height: 220px;">
+                            <canvas id="productDepreciationChart"></canvas>
+                        </div>
+                        <div class="small text-muted text-center mt-2">Projection based on historical resale trends for {{ product.brand }} {{ product.category_rel.name }}.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dual Action Purchase & Rental Tabs -->
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white mb-4">
+                <ul class="nav nav-pills nav-fill mb-3 p-1 bg-light rounded-pill" id="actionTab" role="tablist">
+                    {% if product.is_available_for_resale %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active rounded-pill fw-bold" id="buy-tab" data-bs-toggle="pill" data-bs-target="#buy-pane" type="button" role="tab">
+                            <i class="bi bi-bag-check-fill me-1"></i> Buy Pre-Owned &bull; ${{ "%.2f"|format(product.listed_price) }}
+                        </button>
+                    </li>
+                    {% endif %}
+                    
+                    {% if product.is_available_for_rent %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {% if not product.is_available_for_resale %}active{% endif %} rounded-pill fw-bold" id="rent-tab" data-bs-toggle="pill" data-bs-target="#rent-pane" type="button" role="tab">
+                            <i class="bi bi-calendar2-range me-1 text-primary"></i> Rent &bull; ${{ "%.2f"|format(product.rental_price_per_day) }}/day
+                        </button>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <div class="tab-content" id="actionTabContent">
+                    <!-- Buy Tab Pane -->
+                    {% if product.is_available_for_resale %}
+                    <div class="tab-pane fade show active" id="buy-pane" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <span class="h4 fw-bold text-dark">${{ "%.2f"|format(product.listed_price) }}</span>
+                                <span class="badge bg-success-subtle text-success ms-2">Free Return within 7 Days</span>
+                            </div>
+                            <span class="small text-muted"><i class="bi bi-truck me-1"></i> Dispatched in 24 hrs</span>
+                        </div>
+                        <a href="{{ url_for('checkout', product_id=product.id, type='buy') }}" class="btn btn-luxury w-100 py-3 fs-6">
+                            <i class="bi bi-credit-card me-1"></i> Proceed to Buy Now
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    <!-- Rent Tab Pane -->
+                    {% if product.is_available_for_rent %}
+                    <div class="tab-pane fade {% if not product.is_available_for_resale %}show active{% endif %}" id="rent-pane" role="tabpanel">
+                        <p class="small text-muted mb-3">Select your event dates to calculate rental cost and refundable deposit:</p>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-muted">Start Date</label>
+                                <input type="date" id="rental_start_date" class="form-control form-control-sm rounded-3">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-muted">Return Date</label>
+                                <input type="date" id="rental_end_date" class="form-control form-control-sm rounded-3">
+                            </div>
+                        </div>
+
+                        <!-- Live Calculation Preview -->
+                        <div class="p-3 rounded-3 bg-light border mb-3">
+                            <div class="d-flex justify-content-between small text-muted mb-1">
+                                <span>Duration:</span>
+                                <strong id="calc_total_days" class="text-dark">3 days</strong>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted mb-1">
+                                <span>Rental Fee (${{ "%.2f"|format(product.rental_price_per_day) }}/day):</span>
+                                <strong id="calc_subtotal" class="text-dark">${{ "%.2f"|format(product.rental_price_per_day * 3) }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted mb-1">
+                                <span>Refundable Security Deposit:</span>
+                                <strong id="calc_deposit" class="text-dark">${{ "%.2f"|format(product.rental_security_deposit) }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted mb-2">
+                                <span>Insured Carbon-Neutral Shipping:</span>
+                                <strong class="text-dark">$4.99</strong>
+                            </div>
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between fw-bold">
+                                <span>Total Estimated Amount:</span>
+                                <span id="calc_total" class="h5 text-primary mb-0">${{ "%.2f"|format(product.rental_price_per_day * 3 + product.rental_security_deposit + 4.99) }}</span>
+                            </div>
+                            <div class="small text-muted mt-1" style="font-size: 0.72rem;">*Security deposit is returned to original payment within 24 hours of garment inspection.</div>
+                        </div>
+
+                        <a href="{{ url_for('checkout', product_id=product.id, type='rent') }}" class="btn btn-eco w-100 py-3 fs-6">
+                            <i class="bi bi-calendar-check me-1"></i> Book Rental Dates
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Compare Button -->
+                <div class="mt-3 text-center">
+                    <button class="btn btn-sm btn-outline-secondary compare-toggle-btn rounded-pill px-4" data-product-id="{{ product.id }}">
+                        <i class="bi bi-arrow-left-right me-1"></i> {% if is_in_compare %}Added to Compare{% else %}Add to Side-by-Side Comparison{% endif %}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Garment Description & Seller Condition Notes -->
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white mb-4">
+                <h5 class="fw-bold mb-3">Item Details & Condition Disclosure</h5>
+                <p class="text-muted">{{ product.description }}</p>
+
+                <div class="p-3 bg-light rounded-3 mt-3">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <i class="bi bi-patch-check-fill text-success"></i>
+                        <span class="fw-bold small">Seller Condition Report:</span>
+                    </div>
+                    <div class="small text-secondary">{{ product.flaws_description }}</div>
+                    <div class="small text-muted mt-2">
+                        <strong>Wear frequency:</strong> {{ product.usage_frequency }} &bull; 
+                        <strong>Age:</strong> ~{{ product.age_months }} months
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seller Card -->
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <img src="{{ product.seller.profile_pic }}" alt="{{ product.seller.name }}" class="rounded-circle" width="60" height="60" style="object-fit: cover;">
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h6 class="fw-bold mb-0">{{ product.seller.name }}</h6>
+                            <span class="badge bg-success-subtle text-success small"><i class="bi bi-check-circle"></i> Verified Closet</span>
+                        </div>
+                        <div class="small text-muted">{{ product.seller.city or 'New York' }} &bull; {{ product.seller.eco_points or 100 }} Eco Points</div>
+                        <div class="small text-muted mt-1">{{ product.seller.bio }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verified Customer Reviews Section -->
+    <div class="mt-5 pt-4 border-top">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1">Community Reviews & Experience</h3>
+                <p class="text-muted small mb-0">Feedback from verified buyers and renters.</p>
+            </div>
+            {% if current_user %}
+            <button class="btn btn-sm btn-outline-dark rounded-pill px-3" data-bs-toggle="collapse" data-bs-target="#reviewFormCollapse">
+                <i class="bi bi-pencil-square me-1"></i> Write a Review
+            </button>
+            {% endif %}
+        </div>
+
+        <!-- Add Review Form (Collapsed by default) -->
+        {% if current_user %}
+        <div class="collapse mb-4" id="reviewFormCollapse">
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white">
+                <h5 class="fw-bold mb-3">Share your experience with this piece</h5>
+                <form action="{{ url_for('add_review', product_id=product.id) }}" method="POST">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Star Rating</label>
+                            <select name="rating" class="form-select rounded-3" required>
+                                <option value="5" selected>⭐⭐⭐⭐⭐ (5 - Exceptional)</option>
+                                <option value="4">⭐⭐⭐⭐ (4 - Very Good)</option>
+                                <option value="3">⭐⭐⭐ (3 - Average)</option>
+                                <option value="2">⭐⭐ (2 - Below Expectation)</option>
+                                <option value="1">⭐ (1 - Poor)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold">Headline / Title</label>
+                            <input type="text" name="title" class="form-control rounded-3" placeholder="e.g. Stunning gown, fits true to size!" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Review Details</label>
+                        <textarea name="comment" rows="3" class="form-control rounded-3" placeholder="Describe the fit, condition accuracy, packaging, or rental process..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-luxury rounded-pill px-4">Submit Verified Review</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Reviews List -->
+        {% if product.reviews %}
+        <div class="row g-3">
+            {% for r in product.reviews %}
+            <div class="col-md-6">
+                <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="{{ r.author.profile_pic }}" alt="{{ r.author.name }}" class="rounded-circle" width="36" height="36" style="object-fit: cover;">
+                            <div>
+                                <div class="fw-bold small">{{ r.author.name }}</div>
+                                <span class="badge bg-success-subtle text-success" style="font-size: 0.65rem;">
+                                    <i class="bi bi-shield-check"></i> Verified Experience
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-warning small">
+                            {% for _ in range(r.rating) %}<i class="bi bi-star-fill"></i>{% endfor %}
+                        </div>
+                    </div>
+                    <h6 class="fw-bold mt-2 mb-1">{{ r.title }}</h6>
+                    <p class="small text-muted mb-0">{{ r.comment }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-4 bg-white rounded-4 border text-center text-muted">
+            <i class="bi bi-chat-quote fs-3 mb-2 d-block"></i>
+            Be the first verified customer to review this garment!
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Similar Items -->
+    {% if similar_products %}
+    <div class="mt-5 pt-4 border-top">
+        <h4 class="fw-bold mb-4">You May Also Like in {{ product.category_rel.name }}</h4>
+        <div class="row g-4">
+            {% for sim in similar_products %}
+            <div class="col-md-3 col-6">
+                <div class="product-card">
+                    <div class="product-img-wrapper">
+                        <img src="{{ sim.primary_image }}" alt="{{ sim.title }}">
+                    </div>
+                    <div class="product-body p-3">
+                        <div class="product-brand">{{ sim.brand }}</div>
+                        <div class="small fw-semibold text-truncate mb-1">
+                            <a href="{{ url_for('product_detail', product_id=sim.id) }}">{{ sim.title }}</a>
+                        </div>
+                        <div class="current-price fs-6">${{ "%.2f"|format(sim.listed_price) }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Setup rental picker math
+    setupRentalCalculator(
+        {{ product.rental_price_per_day }},
+        {{ product.rental_security_deposit }}
+    );
+
+    // Setup Chart.js depreciation curve
+    const timelineData = {{ depreciation_timeline | tojson }};
+    renderDepreciationChart('productDepreciationChart', timelineData);
+});
+</script>
+{% endblock %}

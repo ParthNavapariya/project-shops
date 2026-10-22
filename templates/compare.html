@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Side-by-Side Fashion Comparison | ReWear AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold mb-1"><i class="bi bi-arrow-left-right text-success me-2"></i> Fashion Comparison Matrix</h1>
+            <p class="text-muted small mb-0">Evaluate garments side-by-side with machine learning fair value metrics, rental terms, and environmental footprint.</p>
+        </div>
+        {% if items %}
+        <a href="{{ url_for('clear_compare') }}" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+            <i class="bi bi-trash3 me-1"></i> Clear Comparison
+        </a>
+        {% endif %}
+    </div>
+
+    {% if not items %}
+    <div class="card border-0 rounded-4 shadow-sm p-5 text-center bg-white my-4">
+        <div class="stat-icon blue mx-auto mb-3" style="width: 70px; height: 70px; font-size: 2rem;">
+            <i class="bi bi-arrow-left-right"></i>
+        </div>
+        <h3 class="fw-bold mb-2">Your Comparison Matrix is Empty</h3>
+        <p class="text-muted max-w-500 mx-auto mb-4">
+            Select 2 to 4 fashion items from the marketplace by clicking the <strong>Compare</strong> button to contrast AI valuations, condition, and rental terms side-by-side.
+        </p>
+        <div>
+            <a href="{{ url_for('marketplace') }}" class="btn btn-luxury rounded-pill px-4 py-2">
+                <i class="bi bi-bag-check me-1"></i> Browse Marketplace
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <div class="table-responsive">
+        <table class="comparison-table">
+            <tbody>
+                <!-- Header row: Product images and titles -->
+                <tr>
+                    <th>Fashion Item</th>
+                    {% for it in items %}
+                    <td class="text-center" style="min-width: 260px;">
+                        <div class="position-relative d-inline-block mb-3">
+                            <img src="{{ it.product.primary_image }}" alt="{{ it.product.title }}" class="rounded-4 shadow-sm" style="width: 180px; height: 210px; object-fit: cover;">
+                            <button class="btn btn-sm btn-danger position-absolute top-0 end-0 rounded-circle compare-toggle-btn m-1" data-product-id="{{ it.product.id }}" title="Remove" style="width: 28px; height: 28px; padding: 0;">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                        <div class="product-brand mb-1">{{ it.product.brand }}</div>
+                        <h6 class="fw-bold mb-2">
+                            <a href="{{ url_for('product_detail', product_id=it.product.id) }}">{{ it.product.title }}</a>
+                        </h6>
+                    </td>
+                    {% endfor %}
+                </tr>
+
+                <!-- Asking Price -->
+                <tr>
+                    <th>Seller Asking Price</th>
+                    {% for it in items %}
+                    <td class="text-center">
+                        <div class="h4 fw-bold text-dark mb-0">${{ "%.2f"|format(it.product.listed_price) }}</div>
+                        <div class="small text-muted">MSRP: <del>${{ "%.0f"|format(it.product.original_price) }}</del></div>
+                    </td>
+                    {% endfor %}
+                </tr>
+
+                <!-- AI Valuation -->
+                <tr>
+                    <th>AI Fair Resale Value</th>
+                    {% for it in items %}
+                    <td class="text-center">
+                        <div class="h5 fw-bold text-success mb-1">${{ "%.2f"|format(it.valuation['fair_resale_price']) }}</div>
+                        <span class="{{ it.deal['class'] }}" style="font-size: 0.75rem;">
+                            {{ it.deal['badge'] }}
+                        </span>
+                    </td>
+                    {% endfor %}
+                </tr>
+
+                <!-- Rental Rate -->
+                <tr>
+                    <th>Rental Availability</th>
+                    {% for it in items %}
+                    <td class="text-center">
+                        {% if it.product.is_available_for_rent %}
+                            <div class="fw-bold text-primary">${{ "%.2f"|format(it.product.rental_price_per_day) }} / day</div>
+                            <div class="small text-muted">Deposit: ${{ "%.0f"|format(it.product.rental_security_deposit) }}</div>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary">Purchase Only</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+
+                <!-- Condition & Age -->
+                <tr>
+                    <th>Condition & Wear</th>
+                    {% for it in items %}
+                    <td class="text-center">
+                        <div class="badge bg-light text-dark border mb-1">{{ it.product.condition }}</div>
+                        <div class="small text-muted">~{{ it.product.age_months }} months old &bull; {{ it.product.usage_frequency }} wear</div>
+                    </td>
+                    {% endfor %}
+                </tr>
+
+                <!-- Material & Specs -->
+                <tr>
+                    <th>Material & Size</th>
+                    {% for it in items %}
+                    <td class="text-center small">
+                        <strong>{{ it.product.material }}</strong> &bull; Size {{ it.product.size }}
+                        <div class="text-muted">{{ it.product.color }}</div>
+                    </td>
+                    {% endfor %}
+                </tr>
+
+                <!-- Eco-Savings -->
+                <tr>
+                    <th>Environmental Savings</th>
+                    {% for it in items %}
+                    <td class="text-center">
+                        <div class="badge bg-success-subtle text-success p-2 rounded-3">
+                            <div><i class="bi bi-cloud-slash"></i> {{ it.product.co2_saved_kg }} kg CO₂</div>
+                            <div><i class="bi bi-droplet-half"></i> {{ "{:,}".format(it.product.water_saved_liters|int) }} L Water</div>
+                        </div>
+                    </td>
+                    {% endfor %}
+                </tr>
+
+                <!-- Action CTAs -->
+                <tr>
+                    <th>Order Action</th>
+                    {% for it in items %}
+                    <td class="text-center">
+                        <div class="d-grid gap-2">
+                            {% if it.product.is_available_for_resale %}
+                            <a href="{{ url_for('checkout', product_id=it.product.id, type='buy') }}" class="btn btn-sm btn-luxury rounded-pill">
+                                Buy for ${{ "%.0f"|format(it.product.listed_price) }}
+                            </a>
+                            {% endif %}
+                            {% if it.product.is_available_for_rent %}
+                            <a href="{{ url_for('checkout', product_id=it.product.id, type='rent') }}" class="btn btn-sm btn-eco rounded-pill">
+                                Rent for ${{ "%.0f"|format(it.product.rental_price_per_day) }}/d
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

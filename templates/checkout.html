@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Secure Checkout | ReWear AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="max-w-900 mx-auto">
+        <!-- Header -->
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-sm btn-outline-secondary rounded-circle" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h1 class="h3 fw-bold mb-0">
+                    {% if action_type == 'rent' %}
+                        <i class="bi bi-calendar2-range text-primary me-1"></i> Confirm Rental Booking
+                    {% else %}
+                        <i class="bi bi-bag-check-fill text-success me-1"></i> Complete Pre-Owned Purchase
+                    {% endif %}
+                </h1>
+                <p class="text-muted small mb-0">Secure encrypted 256-bit checkout &bull; Protected under ReWear Guarantee</p>
+            </div>
+        </div>
+
+        <form action="{{ url_for('checkout', product_id=product.id, type=action_type) }}" method="POST">
+            <div class="row g-4">
+                <!-- Left: Shipping & Payment Details -->
+                <div class="col-lg-7">
+                    <!-- Delivery Address Card -->
+                    <div class="card border-0 rounded-4 shadow-sm p-4 bg-white mb-4">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-geo-alt text-danger me-2"></i> 1. Delivery & Contact Details</h5>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Street Address *</label>
+                            <input type="text" name="shipping_address" class="form-control rounded-3" value="{{ current_user.address or '450 West 33rd Street' }}" required>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">City *</label>
+                                <input type="text" name="city" class="form-control rounded-3" value="{{ current_user.city or 'New York' }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Postal / ZIP Code *</label>
+                                <input type="text" name="postal_code" class="form-control rounded-3" value="10001" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="form-label small fw-bold text-muted">Contact Phone (for Courier SMS updates) *</label>
+                            <input type="tel" name="contact_phone" class="form-control rounded-3" value="{{ current_user.phone or '+1 (555) 234-5678' }}" required>
+                        </div>
+                    </div>
+
+                    <!-- Rental Dates Card (Only for Rental flow) -->
+                    {% if action_type == 'rent' %}
+                    <div class="card border-0 rounded-4 shadow-sm p-4 bg-white mb-4 border-start border-primary border-4">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-calendar-event text-primary me-2"></i> 2. Rental Period Schedule</h5>
+                        <p class="small text-muted mb-3">Garment will arrive on or before your start date. Return label is included in the package.</p>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Event Start Date *</label>
+                                <input type="date" name="start_date" id="rental_start_date" class="form-control rounded-3" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Return Ship Date *</label>
+                                <input type="date" name="end_date" id="rental_end_date" class="form-control rounded-3" required>
+                            </div>
+                        </div>
+
+                        <div class="form-check small text-muted">
+                            <input class="form-check-input" type="checkbox" id="rental_terms" checked required>
+                            <label class="form-check-label" for="rental_terms">
+                                I agree to the <a href="#" class="text-primary text-decoration-underline">Rental & Care Agreement</a>. Garments are professionally dry-cleaned by ReWear upon return.
+                            </label>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Payment Method Card -->
+                    <div class="card border-0 rounded-4 shadow-sm p-4 bg-white mb-4">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-credit-card text-success me-2"></i> {% if action_type == 'rent' %}3{% else %}2{% endif %}. Simulated Payment Method</h5>
+
+                        <div class="d-flex flex-column gap-2 mb-3">
+                            <label class="p-3 border rounded-3 d-flex align-items-center justify-content-between cursor-pointer bg-light">
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="radio" name="payment_method" value="Credit Card" checked>
+                                    <div>
+                                        <div class="fw-semibold small">Credit / Debit Card</div>
+                                        <div class="text-muted small">Visa, Mastercard, Amex (Simulated test card **** 4242)</div>
+                                    </div>
+                                </div>
+                                <i class="bi bi-credit-card-2-front fs-4 text-primary"></i>
+                            </label>
+
+                            <label class="p-3 border rounded-3 d-flex align-items-center justify-content-between cursor-pointer">
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="radio" name="payment_method" value="UPI / Instant Pay">
+                                    <div>
+                                        <div class="fw-semibold small">UPI / Digital Wallet</div>
+                                        <div class="text-muted small">Google Pay, PhonePe, Apple Pay</div>
+                                    </div>
+                                </div>
+                                <i class="bi bi-phone fs-4 text-success"></i>
+                            </label>
+                        </div>
+
+                        <div class="alert alert-light border rounded-3 p-3 small text-muted mb-0">
+                            <i class="bi bi-shield-lock-fill text-success me-1"></i>
+                            This is a secure simulated transaction. No actual real credit card charge will be levied during demonstration.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Order Summary Sidebar -->
+                <div class="col-lg-5">
+                    <div class="card border-0 rounded-4 shadow-sm p-4 bg-white sticky-top" style="top: 100px;">
+                        <h5 class="fw-bold mb-3 pb-2 border-bottom">Order Summary</h5>
+
+                        <div class="d-flex gap-3 mb-3 pb-3 border-bottom">
+                            <img src="{{ product.primary_image }}" alt="{{ product.title }}" class="rounded-3 shadow-sm" style="width: 72px; height: 90px; object-fit: cover;">
+                            <div>
+                                <span class="badge bg-light text-muted border mb-1" style="font-size: 0.65rem;">{{ product.brand }} &bull; Size {{ product.size }}</span>
+                                <h6 class="fw-bold mb-1 small">{{ product.title }}</h6>
+                                <div class="small text-muted">{{ product.condition }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Calculation breakdown -->
+                        {% if action_type == 'rent' %}
+                            <div class="d-flex justify-content-between small text-muted mb-2">
+                                <span>Rental Duration:</span>
+                                <strong id="calc_total_days" class="text-dark">3 days</strong>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted mb-2">
+                                <span>Rental Fee (${{ "%.2f"|format(product.rental_price_per_day) }}/d):</span>
+                                <strong id="calc_subtotal" class="text-dark">${{ "%.2f"|format(product.rental_price_per_day * 3) }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted mb-2">
+                                <span>Refundable Security Deposit:</span>
+                                <strong id="calc_deposit" class="text-dark">${{ "%.2f"|format(product.rental_security_deposit) }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted mb-2">
+                                <span>Carbon-Neutral Insured Shipping:</span>
+                                <strong class="text-dark">$4.99</strong>
+                            </div>
+                            <hr class="my-3">
+                            <div class="d-flex justify-content-between align-items-baseline mb-4">
+                                <span class="fw-bold">Total Due Today:</span>
+                                <span id="calc_total" class="h4 fw-bold text-primary mb-0">${{ "%.2f"|format(product.rental_price_per_day * 3 + product.rental_security_deposit + 4.99) }}</span>
+                            </div>
+                            <div class="small text-muted mb-3" style="font-size: 0.72rem;">
+                                *Your ${{ "%.2f"|format(product.rental_security_deposit) }} security deposit will be automatically refunded upon return garment inspection.
+                            </div>
+                        {% else %}
+                            <div class="d-flex justify-content-between small text-muted mb-2">
+                                <span>Pre-Owned Listed Price:</span>
+                                <strong class="text-dark">${{ "%.2f"|format(product.listed_price) }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted mb-2">
+                                <span>Original Retail Value:</span>
+                                <del class="text-muted">${{ "%.2f"|format(product.original_price) }}</del>
+                            </div>
+                            <div class="d-flex justify-content-between small text-success mb-2">
+                                <span>You Save ({{ product.discount_pct }}%):</span>
+                                <strong>-${{ "%.2f"|format(product.original_price - product.listed_price) }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted mb-2">
+                                <span>Carbon-Neutral Insured Delivery:</span>
+                                <strong class="text-dark">$4.99</strong>
+                            </div>
+                            <hr class="my-3">
+                            <div class="d-flex justify-content-between align-items-baseline mb-4">
+                                <span class="fw-bold">Total Amount:</span>
+                                <span class="h4 fw-bold text-dark mb-0">${{ "%.2f"|format(product.listed_price + 4.99) }}</span>
+                            </div>
+                        {% endif %}
+
+                        <!-- Sustainability Impact Callout -->
+                        <div class="p-3 rounded-3 bg-success-subtle text-success small mb-4">
+                            <i class="bi bi-leaf-fill me-1"></i>
+                            <strong>Environmental Impact:</strong> You earn +35 Eco-Points and save {{ product.co2_saved_kg }} kg of CO₂!
+                        </div>
+
+                        <button type="submit" class="btn btn-luxury w-100 py-3 rounded-pill fw-bold shadow-md">
+                            {% if action_type == 'rent' %}
+                                <i class="bi bi-calendar-check me-1"></i> Confirm & Book Rental
+                            {% else %}
+                                <i class="bi bi-shield-lock-fill me-1"></i> Place Pre-Owned Order
+                            {% endif %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if action_type == 'rent' %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    setupRentalCalculator(
+        {{ product.rental_price_per_day }},
+        {{ product.rental_security_deposit }}
+    );
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}My Orders & Active Rentals | ReWear AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold mb-1"><i class="bi bi-box-seam text-primary me-2"></i> My Orders & Wardrobe Rentals</h1>
+            <p class="text-muted small mb-0">Track real-time courier dispatches, manage active rental durations, and request prepaid returns.</p>
+        </div>
+        <a href="{{ url_for('marketplace') }}" class="btn btn-sm btn-outline-dark rounded-pill px-3">
+            <i class="bi bi-bag-check me-1"></i> Browse More Pieces
+        </a>
+    </div>
+
+    <!-- Active Rentals Section -->
+    <div class="card border-0 rounded-4 shadow-sm p-4 bg-white mb-5 border-start border-primary border-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-calendar2-range me-2"></i> Active Fashion Rentals ({{ active_rentals|length }})</h5>
+                <span class="small text-muted">Garments currently in your custody. Return on or before the due date for full deposit release.</span>
+            </div>
+        </div>
+
+        {% if not active_rentals %}
+        <div class="p-4 text-center text-muted bg-light rounded-3">
+            <i class="bi bi-calendar-x fs-3 mb-2 d-block text-secondary"></i>
+            You currently have no active designer rentals.
+            <div class="mt-2">
+                <a href="{{ url_for('marketplace', mode='rent') }}" class="btn btn-sm btn-eco rounded-pill px-3">Browse Rentals</a>
+            </div>
+        </div>
+        {% else %}
+        <div class="row g-3">
+            {% for order in active_rentals %}
+            <div class="col-lg-6">
+                <div class="p-3 border rounded-3 bg-light h-100 d-flex gap-3">
+                    <img src="{{ order.product.primary_image }}" alt="{{ order.product.title }}" class="rounded-3 shadow-sm" style="width: 85px; height: 110px; object-fit: cover;">
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="badge bg-primary text-white" style="font-size: 0.7rem;">{{ order.order_status }}</span>
+                            <span class="small text-muted fw-bold">{{ order.order_number }}</span>
+                        </div>
+                        <h6 class="fw-bold mb-1 small">{{ order.product.title }}</h6>
+                        
+                        {% if order.rental_detail %}
+                        <div class="small text-muted mb-2">
+                            <i class="bi bi-clock me-1"></i> Return Date: <strong class="text-danger">{{ order.rental_detail.end_date }}</strong>
+                        </div>
+                        <div class="small text-secondary mb-3">
+                            Deposit: <strong>${{ "%.2f"|format(order.rental_detail.security_deposit) }}</strong> (Refundable upon return)
+                        </div>
+                        {% endif %}
+
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('order_detail', order_id=order.id) }}" class="btn btn-sm btn-dark rounded-pill px-3">
+                                Track & Manage
+                            </a>
+                            <form action="{{ url_for('process_return', order_id=order.id) }}" method="POST" onsubmit="return confirm('Generate prepaid courier return label?');">
+                                <input type="hidden" name="reason" value="Rental Period Complete">
+                                <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-3">
+                                    <i class="bi bi-arrow-return-left me-1"></i> Return Garment
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Purchase Orders History -->
+    <div class="card border-0 rounded-4 shadow-sm p-4 bg-white">
+        <h5 class="fw-bold mb-3"><i class="bi bi-receipt text-success me-2"></i> Purchase Order History</h5>
+
+        {% if not past_orders %}
+        <div class="p-4 text-center text-muted bg-light rounded-3">
+            <i class="bi bi-bag-x fs-3 mb-2 d-block text-secondary"></i>
+            No previous completed purchases.
+        </div>
+        {% else %}
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="small text-muted text-uppercase">Order</th>
+                        <th class="small text-muted text-uppercase">Item</th>
+                        <th class="small text-muted text-uppercase">Type</th>
+                        <th class="small text-muted text-uppercase">Amount</th>
+                        <th class="small text-muted text-uppercase">Date</th>
+                        <th class="small text-muted text-uppercase">Status</th>
+                        <th class="small text-muted text-uppercase text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in past_orders %}
+                    <tr>
+                        <td class="fw-bold small">{{ o.order_number }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <img src="{{ o.product.primary_image }}" alt="{{ o.product.title }}" class="rounded" width="40" height="48" style="object-fit: cover;">
+                                <div>
+                                    <div class="small fw-bold text-truncate" style="max-width: 180px;">{{ o.product.title }}</div>
+                                    <span class="text-muted" style="font-size: 0.72rem;">{{ o.product.brand }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge {% if o.order_type == 'Rent' %}bg-primary-subtle text-primary{% else %}bg-dark-subtle text-dark{% endif %}" style="font-size: 0.7rem;">
+                                {{ o.order_type }}
+                            </span>
+                        </td>
+                        <td class="fw-bold small">${{ "%.2f"|format(o.total_amount) }}</td>
+                        <td class="small text-muted">{{ o.created_at.strftime('%b %d, %Y') }}</td>
+                        <td>
+                            <span class="badge {% if o.order_status in ('Delivered', 'Completed') %}bg-success-subtle text-success{% else %}bg-warning-subtle text-warning{% endif %}">
+                                {{ o.order_status }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ url_for('order_detail', order_id=o.id) }}" class="btn btn-sm btn-outline-dark rounded-pill px-3">
+                                View Details
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

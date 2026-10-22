@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account | ReWear AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card border-0 rounded-4 shadow-lg p-4 p-md-5 bg-white">
+                <div class="text-center mb-4">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-success-subtle text-success rounded-circle mb-2" style="width: 52px; height: 52px; font-size: 1.5rem;">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <h2 class="h3 fw-bold mb-1">Join ReWear AI</h2>
+                    <p class="text-muted small">Earn 50 Eco-Points upon registration & access AI pricing</p>
+                </div>
+
+                <form method="POST" action="{{ url_for('register') }}">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Full Name *</label>
+                        <input type="text" name="name" class="form-control rounded-3 py-2" placeholder="e.g. Maya Chen" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Email Address *</label>
+                        <input type="email" name="email" class="form-control rounded-3 py-2" placeholder="name@example.com" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">City / Location</label>
+                        <input type="text" name="city" class="form-control rounded-3 py-2" placeholder="e.g. San Francisco" value="New York">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Account Role</label>
+                        <select name="role" class="form-select rounded-3 py-2">
+                            <option value="both" selected>Both Buyer & Wardrobe Seller / Renter</option>
+                            <option value="buyer">Buyer / Renter Only</option>
+                            <option value="seller">Seller Only</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-muted">Create Password *</label>
+                        <input type="password" name="password" class="form-control rounded-3 py-2" placeholder="At least 6 characters" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-luxury w-100 py-2 rounded-pill fw-semibold">
+                        Create Account & Claim 50 Eco-Points
+                    </button>
+                </form>
+
+                <div class="text-center mt-4 pt-2 border-top small text-muted">
+                    Already have an account? <a href="{{ url_for('login') }}" class="text-dark fw-bold">Sign In</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

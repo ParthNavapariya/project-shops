@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Explore Pre-Owned & Rental Fashion | ReWear AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header & Mode Switcher -->
+    <div class="row align-items-center mb-4">
+        <div class="col-lg-6">
+            <h1 class="h2 fw-bold mb-1">
+                {% if current_category %}
+                    {{ current_category.name }}
+                {% elif selected_mode == 'buy' %}
+                    Buy Pre-Owned Fashion
+                {% elif selected_mode == 'rent' %}
+                    Designer Rental Collection
+                {% elif selected_deal == 'great' %}
+                    AI Great Deal Spotlight
+                {% else %}
+                    Marketplace Catalog
+                {% endif %}
+            </h1>
+            <p class="text-muted small mb-0">Showing {{ products|length }} verified fashion pieces with AI fair pricing.</p>
+        </div>
+
+        <!-- Mode Toggle Tabs (All / Buy / Rent) -->
+        <div class="col-lg-6 d-flex justify-content-lg-end mt-3 mt-lg-0">
+            <div class="btn-group p-1 bg-white border rounded-pill shadow-sm">
+                <a href="{{ url_for('marketplace', category=request.args.get('category', ''), brand=selected_brand, size=selected_size, condition=selected_condition, sort=selected_sort) }}" class="btn btn-sm rounded-pill px-3 fw-semibold {% if selected_mode == 'all' %}btn-dark{% else %}btn-light text-muted{% endif %}">
+                    All Items
+                </a>
+                <a href="{{ url_for('marketplace', mode='buy', category=request.args.get('category', ''), brand=selected_brand, size=selected_size, condition=selected_condition, sort=selected_sort) }}" class="btn btn-sm rounded-pill px-3 fw-semibold {% if selected_mode == 'buy' %}btn-dark{% else %}btn-light text-muted{% endif %}">
+                    <i class="bi bi-bag-check me-1"></i> Buy Pre-Owned
+                </a>
+                <a href="{{ url_for('marketplace', mode='rent', category=request.args.get('category', ''), brand=selected_brand, size=selected_size, condition=selected_condition, sort=selected_sort) }}" class="btn btn-sm rounded-pill px-3 fw-semibold {% if selected_mode == 'rent' %}btn-primary{% else %}btn-light text-muted{% endif %}">
+                    <i class="bi bi-calendar-event me-1"></i> Rent Only
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Sidebar Filters -->
+        <div class="col-lg-3">
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white sticky-top" style="top: 100px; z-index: 10;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-sliders me-1"></i> Filters</h5>
+                    <a href="{{ url_for('marketplace') }}" class="small text-danger fw-semibold">Reset</a>
+                </div>
+
+                <form method="GET" action="{{ url_for('marketplace') }}">
+                    <!-- Preserve hidden values -->
+                    {% if selected_mode != 'all' %}
+                    <input type="hidden" name="mode" value="{{ selected_mode }}">
+                    {% endif %}
+                    {% if search_query %}
+                    <input type="hidden" name="q" value="{{ search_query }}">
+                    {% endif %}
+
+                    <!-- Category Filter -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Category</label>
+                        <select name="category" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
+                            <option value="">All Categories</option>
+                            {% for cat in nav_categories %}
+                            <option value="{{ cat.slug }}" {% if current_category and current_category.slug == cat.slug %}selected{% endif %}>
+                                {{ cat.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- AI Deal Quality Filter -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted text-uppercase">AI Deal Valuation</label>
+                        <select name="deal" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
+                            <option value="">All Deal Ratings</option>
+                            <option value="great" {% if selected_deal == 'great' %}selected{% endif %}>🔥 Great Deal (>15% below market)</option>
+                            <option value="fair" {% if selected_deal == 'fair' %}selected{% endif %}>✨ Fair Market Price</option>
+                        </select>
+                    </div>
+
+                    <!-- Brand Filter -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Brand</label>
+                        <select name="brand" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
+                            <option value="">All Brands</option>
+                            {% for b in available_brands %}
+                            <option value="{{ b }}" {% if selected_brand == b %}selected{% endif %}>{{ b }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Size Filter -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Size</label>
+                        <select name="size" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
+                            <option value="">All Sizes</option>
+                            {% for s in ['XS', 'S', 'M', 'L', 'XL', 'Free Size'] %}
+                            <option value="{{ s }}" {% if selected_size == s %}selected{% endif %}>{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Condition Filter -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Condition</label>
+                        <select name="condition" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
+                            <option value="">All Conditions</option>
+                            <option value="Brand New with Tags" {% if selected_condition == 'Brand New with Tags' %}selected{% endif %}>Brand New with Tags</option>
+                            <option value="Like New" {% if selected_condition == 'Like New' %}selected{% endif %}>Like New</option>
+                            <option value="Gently Used" {% if selected_condition == 'Gently Used' %}selected{% endif %}>Gently Used</option>
+                            <option value="Fair / Well Used" {% if selected_condition == 'Fair / Well Used' %}selected{% endif %}>Well Used</option>
+                        </select>
+                    </div>
+
+                    <!-- Sort By -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Sort By</label>
+                        <select name="sort" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
+                            <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Newest Additions</option>
+                            <option value="price_low" {% if selected_sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                            <option value="price_high" {% if selected_sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                            <option value="discount" {% if selected_sort == 'discount' %}selected{% endif %}>Biggest Discount %</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-sm btn-dark w-100 rounded-pill mt-2">Apply Filters</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Product Grid -->
+        <div class="col-lg-9">
+            {% if search_query %}
+            <div class="alert alert-light border rounded-4 d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <span class="text-muted">Search results for:</span> <strong>"{{ search_query }}"</strong>
+                </div>
+                <a href="{{ url_for('marketplace') }}" class="btn btn-sm btn-outline-secondary rounded-pill">Clear Search</a>
+            </div>
+            {% endif %}
+
+            {% if products|length == 0 %}
+            <div class="text-center py-5 bg-white rounded-4 border">
+                <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+                <h4 class="fw-bold mt-3">No fashion pieces match your criteria</h4>
+                <p class="text-muted small">Try adjusting your filters or search keywords.</p>
+                <a href="{{ url_for('marketplace') }}" class="btn btn-dark rounded-pill px-4">View All Items</a>
+            </div>
+            {% else %}
+            <div class="row g-4">
+                {% for product in products %}
+                <div class="col-md-6 col-xl-4">
+                    <div class="product-card">
+                        <div class="product-img-wrapper">
+                            <img src="{{ product.primary_image }}" alt="{{ product.title }}" loading="lazy">
+                            
+                            <!-- Badges -->
+                            <div class="card-badge-top-left">
+                                <span class="{{ product.deal_rating['class'] }}">
+                                    <i class="bi bi-stars"></i> {{ product.deal_rating['label'] }}
+                                </span>
+                                {% if product.is_available_for_rent %}
+                                <span class="badge-mode">
+                                    <i class="bi bi-calendar2-week"></i> Rentable
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            <div class="card-badge-top-right">
+                                <button class="wishlist-btn-circle wishlist-toggle-btn" data-product-id="{{ product.id }}" title="Save to wishlist">
+                                    <i class="bi bi-heart"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="product-body">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="product-brand">{{ product.brand }}</span>
+                                <span class="badge bg-light text-muted border" style="font-size: 0.68rem;">{{ product.size }} &bull; {{ product.condition }}</span>
+                            </div>
+
+                            <h3 class="product-title">
+                                <a href="{{ url_for('product_detail', product_id=product.id) }}">{{ product.title }}</a>
+                            </h3>
+
+                            <div class="price-row">
+                                <div class="current-price">${{ "%.2f"|format(product.listed_price) }}</div>
+                                <div class="original-price">${{ "%.0f"|format(product.original_price) }}</div>
+                                <span class="ai-fair-tag">Fair: ${{ "%.0f"|format(product.estimated_fair_price or product.listed_price) }}</span>
+                            </div>
+
+                            {% if product.is_available_for_rent %}
+                            <div class="rental-rate-row">
+                                <span><i class="bi bi-calendar2-week text-primary me-1"></i> Rent:</span>
+                                <strong class="text-primary">${{ "%.2f"|format(product.rental_price_per_day) }} / day</strong>
+                            </div>
+                            {% endif %}
+
+                            <div class="d-flex gap-2 mt-3 pt-2 border-top">
+                                <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-sm btn-outline-dark flex-grow-1 rounded-pill">
+                                    View Details
+                                </a>
+                                <button class="btn btn-sm btn-outline-secondary compare-toggle-btn rounded-pill px-3" data-product-id="{{ product.id }}" title="Compare">
+                                    <i class="bi bi-arrow-left-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

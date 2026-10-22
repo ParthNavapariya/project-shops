@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Circular Fashion Impact Tracker | ReWear AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="text-center max-w-700 mx-auto mb-5">
+        <span class="badge bg-success-subtle text-success fw-bold text-uppercase px-3 py-2 rounded-pill mb-2">
+            <i class="bi bi-globe-americas"></i> Planetary Footprint Metrics
+        </span>
+        <h1 class="display-6 fw-bold">Circular Fashion Sustainability Impact</h1>
+        <p class="text-muted">
+            The fashion industry is responsible for 10% of global carbon emissions. By circulating, renting, and reusing garments, our community extends the functional life of clothing and curtails raw material manufacturing.
+        </p>
+    </div>
+
+    <!-- Hero Stats Grid -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-3 col-sm-6">
+            <div class="card border-0 rounded-4 shadow-sm p-4 text-center bg-white h-100 border-top border-success border-4">
+                <div class="stat-icon eco mx-auto mb-3" style="width: 56px; height: 56px; font-size: 1.6rem;">
+                    <i class="bi bi-cloud-slash"></i>
+                </div>
+                <div class="display-6 fw-bold text-dark mb-1">{{ total_co2 }} kg</div>
+                <div class="fw-bold small text-success text-uppercase">CO₂ Prevented</div>
+                <p class="small text-muted mt-2 mb-0">Equivalent to {{ "%.0f"|format(total_co2 / 2.3) }} car miles off the road.</p>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-sm-6">
+            <div class="card border-0 rounded-4 shadow-sm p-4 text-center bg-white h-100 border-top border-primary border-4">
+                <div class="stat-icon blue mx-auto mb-3" style="width: 56px; height: 56px; font-size: 1.6rem;">
+                    <i class="bi bi-droplet-half"></i>
+                </div>
+                <div class="display-6 fw-bold text-dark mb-1">{{ "{:,}".format(total_water) }} L</div>
+                <div class="fw-bold small text-primary text-uppercase">Water Conserved</div>
+                <p class="small text-muted mt-2 mb-0">Enough clean water for {{ "%.0f"|format(total_water / 150) }} domestic showers.</p>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-sm-6">
+            <div class="card border-0 rounded-4 shadow-sm p-4 text-center bg-white h-100 border-top border-warning border-4">
+                <div class="stat-icon gold mx-auto mb-3" style="width: 56px; height: 56px; font-size: 1.6rem;">
+                    <i class="bi bi-recycle"></i>
+                </div>
+                <div class="display-6 fw-bold text-dark mb-1">{{ items_circulated }}</div>
+                <div class="fw-bold small text-warning text-uppercase">Garments Circulated</div>
+                <p class="small text-muted mt-2 mb-0">Diverted from municipal landfills and waste incinerators.</p>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-sm-6">
+            <div class="card border-0 rounded-4 shadow-sm p-4 text-center bg-white h-100 border-top border-info border-4">
+                <div class="stat-icon eco mx-auto mb-3" style="width: 56px; height: 56px; font-size: 1.6rem;">
+                    <i class="bi bi-tree"></i>
+                </div>
+                <div class="display-6 fw-bold text-dark mb-1">{{ "%.0f"|format(total_co2 / 21) }}</div>
+                <div class="fw-bold small text-info text-uppercase">Tree Seedlings Equivalent</div>
+                <p class="small text-muted mt-2 mb-0">Annual carbon sequestration equivalent of mature trees.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personal Impact & Category Savings Chart -->
+    <div class="row g-4 mb-5">
+        <!-- Personal User Impact -->
+        <div class="col-lg-5">
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="stat-icon eco" style="width: 52px; height: 52px; font-size: 1.5rem;">
+                        <i class="bi bi-award"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Your Personal Wardrobe Impact</h5>
+                        <span class="small text-muted">Tier: <strong class="text-success">Eco Stylist Level 3</strong></span>
+                    </div>
+                </div>
+
+                {% if current_user %}
+                <div class="p-3 rounded-3 bg-light border mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small">Your ReWear Eco Points:</span>
+                        <strong class="text-success">{{ current_user.eco_points or 150 }} pts</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small">CO₂ Prevented from Orders:</span>
+                        <strong class="text-dark">{{ user_saved_co2 }} kg</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small">Water Saved:</span>
+                        <strong class="text-primary">{{ "{:,}".format(user_saved_water) }} Liters</strong>
+                    </div>
+                </div>
+                {% else %}
+                <div class="p-3 rounded-3 bg-light text-center small text-muted mb-3">
+                    <a href="{{ url_for('login') }}" class="text-success fw-bold">Sign in</a> to track your personal water and carbon savings from orders!
+                </div>
+                {% endif %}
+
+                <h6 class="fw-bold mt-3 mb-2 small text-uppercase text-muted">Circular Fashion Facts</h6>
+                <ul class="small text-muted ps-3 mb-0">
+                    <li class="mb-2">A single pair of new jeans requires <strong>7,600 liters of water</strong> to produce from raw cotton.</li>
+                    <li class="mb-2">Extending the life of a garment by just <strong>9 months</strong> reduces its carbon and water footprint by 20% to 30%.</li>
+                    <li>Renting special occasion dresses prevents <strong>85%</strong> of single-use garment manufacturing emissions.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Category Footprint Comparison Chart -->
+        <div class="col-lg-7">
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-bar-chart text-success me-2"></i> Manufacturing Savings by Apparel Type</h5>
+                    <span class="badge bg-light text-muted border">Liters & Kilograms</span>
+                </div>
+                <div style="height: 290px;">
+                    <canvas id="ecoBenchmarkChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const ctx = document.getElementById('ecoBenchmarkChart');
+    if (ctx && window.Chart) {
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Suits & Blazers', 'Jackets & Coats', 'Denim Jeans', 'Dresses & Gowns', 'Designer Shoes', 'Knitwear'],
+                datasets: [
+                    {
+                        label: 'CO₂ Saved (kg)',
+                        data: [24.0, 18.5, 11.0, 9.2, 14.0, 8.5],
+                        backgroundColor: '#059669',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Water Saved (Hundreds of Liters)',
+                        data: [68, 52, 76, 34, 41, 28],
+                        backgroundColor: '#2563eb',
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: (c) => ` ${c.dataset.label}: ${c.raw}`
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { grid: { color: 'rgba(0,0,0,0.05)' } }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

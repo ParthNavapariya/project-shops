@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+
+{% block title %}ReWear AI | Circular Luxury Fashion & AI Rental Marketplace{% endblock %}
+
+{% block content %}
+
+<!-- Hero Banner -->
+<section class="hero-wrapper">
+    <div class="hero-glow"></div>
+    <div class="container position-relative" style="z-index: 2;">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-7">
+                <div class="hero-badge">
+                    <i class="bi bi-cpu-fill"></i> Machine Learning Fair Resale & Rental Ecosystem
+                </div>
+                <h1 class="hero-title">
+                    Wear Archival Fashion.<br>
+                    <span class="gradient-text">Fair AI Pricing.</span><br>
+                    Zero Environmental Waste.
+                </h1>
+                <p class="hero-desc">
+                    The intelligent circular fashion marketplace powered by Scikit-learn. Buy verified pre-owned garments at algorithmic fair value, rent designer pieces for special occasions, or monetize your wardrobe.
+                </p>
+                <div class="d-flex flex-wrap gap-3 mb-5">
+                    <a href="{{ url_for('marketplace') }}" class="btn btn-luxury px-4 py-3">
+                        <i class="bi bi-bag-check-fill me-1"></i> Explore Marketplace
+                    </a>
+                    <a href="{{ url_for('ai_lab') }}" class="btn btn-outline-luxury px-4 py-3">
+                        <i class="bi bi-magic me-1 text-success"></i> Try AI Price Estimator
+                    </a>
+                    <a href="{{ url_for('marketplace', mode='rent') }}" class="btn btn-eco px-4 py-3">
+                        <i class="bi bi-calendar-event me-1"></i> Rent Outfits
+                    </a>
+                </div>
+
+                <!-- Sustainability Stats Bar -->
+                <div class="row g-3">
+                    <div class="col-sm-4 col-6">
+                        <div class="stat-card-mini">
+                            <div class="stat-icon eco">
+                                <i class="bi bi-cloud-slash"></i>
+                            </div>
+                            <div>
+                                <div class="stat-value">{{ total_co2 }} kg</div>
+                                <div class="stat-label">CO₂ Emissions Saved</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-6">
+                        <div class="stat-card-mini">
+                            <div class="stat-icon blue">
+                                <i class="bi bi-droplet-half"></i>
+                            </div>
+                            <div>
+                                <div class="stat-value">{{ "{:,}".format(total_water) }} L</div>
+                                <div class="stat-label">Clean Water Saved</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-12">
+                        <div class="stat-card-mini">
+                            <div class="stat-icon gold">
+                                <i class="bi bi-recycle"></i>
+                            </div>
+                            <div>
+                                <div class="stat-value">{{ total_reused }}+</div>
+                                <div class="stat-label">Pieces Circulated</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Mini Valuation Teaser on Hero -->
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-lg rounded-4 p-4 bg-white position-relative" style="backdrop-filter: blur(20px);">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="ai-chip-header mb-0">
+                            <i class="bi bi-lightning-charge-fill text-success"></i> Quick AI Price Predictor
+                        </span>
+                        <span class="badge bg-light text-muted border">Live ML Engine</span>
+                    </div>
+                    <p class="small text-muted mb-3">
+                        Curious about what your designer dress, coat or sneakers are worth today? Enter specs below:
+                    </p>
+
+                    <form id="hero-quick-calc-form">
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold text-muted mb-1">Brand</label>
+                            <select id="quick_brand" class="form-select form-select-sm rounded-3">
+                                <option value="Burberry" selected>Burberry</option>
+                                <option value="Gucci">Gucci</option>
+                                <option value="Saint Laurent">Saint Laurent</option>
+                                <option value="Prada">Prada</option>
+                                <option value="Ralph Lauren">Ralph Lauren</option>
+                                <option value="Nike">Nike / Jordan</option>
+                                <option value="Patagonia">Patagonia</option>
+                                <option value="Zara">Zara</option>
+                                <option value="Other">Other Designer</option>
+                            </select>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-muted mb-1">Category</label>
+                                <select id="quick_category" class="form-select form-select-sm rounded-3">
+                                    <option value="Jackets & Coats" selected>Jackets & Coats</option>
+                                    <option value="Dresses & Gowns">Dresses & Gowns</option>
+                                    <option value="Suits & Blazers">Suits & Blazers</option>
+                                    <option value="Shoes & Sneakers">Shoes & Sneakers</option>
+                                    <option value="Bags & Accessories">Bags & Accessories</option>
+                                    <option value="Denim & Jeans">Denim & Jeans</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-muted mb-1">Original Retail ($)</label>
+                                <input type="number" id="quick_original_price" class="form-control form-control-sm rounded-3" value="1200" min="20">
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-muted mb-1">Garment Age</label>
+                                <select id="quick_age" class="form-select form-select-sm rounded-3">
+                                    <option value="3">< 6 Months</option>
+                                    <option value="12" selected>~1 Year</option>
+                                    <option value="24">~2 Years</option>
+                                    <option value="48">3+ Years (Vintage)</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-muted mb-1">Condition</label>
+                                <select id="quick_condition" class="form-select form-select-sm rounded-3">
+                                    <option value="Brand New with Tags">Brand New (Tags)</option>
+                                    <option value="Like New" selected>Like New</option>
+                                    <option value="Gently Used">Gently Used</option>
+                                    <option value="Fair / Well Used">Well Used</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="button" id="btn-quick-evaluate" class="btn btn-luxury w-100 py-2">
+                            <i class="bi bi-cpu me-1"></i> Calculate Fair Price
+                        </button>
+                    </form>
+
+                    <!-- Quick Result Box -->
+                    <div id="quick-result-box" class="mt-3 p-3 rounded-3 bg-light border" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small text-muted fw-bold">Est. Fair Resale:</span>
+                            <span id="quick_resale_val" class="h5 fw-bold text-success mb-0">$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small text-muted">Daily Rental Rate:</span>
+                            <span id="quick_rental_val" class="fw-bold text-primary">$0.00 / day</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small text-muted">Eco Impact:</span>
+                            <span id="quick_eco_val" class="small fw-semibold text-success"><i class="bi bi-tree"></i> 8.5 kg CO₂</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- AI Spotlight: Best Value Deals -->
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-end mb-4">
+            <div>
+                <span class="badge bg-success-subtle text-success fw-bold text-uppercase px-3 py-2 rounded-pill mb-2">
+                    <i class="bi bi-stars"></i> Handpicked by AI
+                </span>
+                <h2 class="h2 fw-bold mb-1">Featured Pre-Owned & Rental Catalog</h2>
+                <p class="text-muted mb-0">Every piece priced fairly according to real-time depreciation and condition metrics.</p>
+            </div>
+            <a href="{{ url_for('marketplace') }}" class="btn btn-outline-dark rounded-pill px-4 mt-3 mt-md-0">
+                View All Pieces <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <div class="row g-4">
+            {% for product in featured_products %}
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="product-card">
+                    <div class="product-img-wrapper">
+                        <img src="{{ product.primary_image }}" alt="{{ product.title }}" loading="lazy">
+                        
+                        <!-- Top Left Badges -->
+                        <div class="card-badge-top-left">
+                            <span class="{{ product.deal_rating['class'] }}">
+                                <i class="bi bi-check-circle-fill"></i> {{ product.deal_rating['label'] }}
+                            </span>
+                            {% if product.discount_pct > 0 %}
+                            <span class="badge bg-dark text-white rounded-pill" style="font-size: 0.7rem;">
+                                {{ product.discount_pct }}% OFF RETAIL
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Top Right Badges -->
+                        <div class="card-badge-top-right">
+                            <button class="wishlist-btn-circle wishlist-toggle-btn" data-product-id="{{ product.id }}" title="Save to wishlist">
+                                <i class="bi bi-heart"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="product-body">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="product-brand">{{ product.brand }}</span>
+                            <span class="badge bg-light text-muted border" style="font-size: 0.7rem;">{{ product.condition }}</span>
+                        </div>
+                        
+                        <h3 class="product-title">
+                            <a href="{{ url_for('product_detail', product_id=product.id) }}">{{ product.title }}</a>
+                        </h3>
+
+                        <div class="price-row">
+                            <div class="current-price">${{ "%.2f"|format(product.listed_price) }}</div>
+                            <div class="original-price">${{ "%.0f"|format(product.original_price) }}</div>
+                            <span class="ai-fair-tag">AI Fair: ${{ "%.0f"|format(product.estimated_fair_price or product.listed_price) }}</span>
+                        </div>
+
+                        {% if product.is_available_for_rent %}
+                        <div class="rental-rate-row">
+                            <span><i class="bi bi-calendar2-week text-primary me-1"></i> Rent from:</span>
+                            <strong class="text-primary">${{ "%.2f"|format(product.rental_price_per_day) }} / day</strong>
+                        </div>
+                        {% endif %}
+
+                        <div class="d-flex gap-2 mt-3 pt-2 border-top">
+                            <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-sm btn-outline-dark flex-grow-1 rounded-pill">
+                                View Details
+                            </a>
+                            <button class="btn btn-sm btn-outline-secondary compare-toggle-btn rounded-pill px-3" data-product-id="{{ product.id }}" title="Compare">
+                                <i class="bi bi-arrow-left-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5 bg-white border-top border-bottom">
+    <div class="container py-3">
+        <div class="text-center max-w-700 mx-auto mb-5">
+            <span class="badge bg-primary-subtle text-primary fw-bold text-uppercase px-3 py-2 rounded-pill mb-2">
+                Transparent & Sustainable
+            </span>
+            <h2 class="h2 fw-bold">How the AI Resale & Rental Engine Works</h2>
+            <p class="text-muted">A closed-loop platform bringing mathematical pricing transparency to the circular economy.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="p-4 rounded-4 bg-light border text-center h-100">
+                    <div class="stat-icon eco mx-auto mb-3" style="width: 56px; height: 56px; font-size: 1.6rem;">
+                        <i class="bi bi-cpu"></i>
+                    </div>
+                    <h4 class="h5 fw-bold mb-2">1. AI Valuation Engine</h4>
+                    <p class="small text-muted mb-0">
+                        Our Scikit-learn Gradient Boosting model evaluates brand tier, material, age decay, usage frequency, and market transactions to calculate fair resale and daily rental prices.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <div class="p-4 rounded-4 bg-light border text-center h-100">
+                    <div class="stat-icon blue mx-auto mb-3" style="width: 56px; height: 56px; font-size: 1.6rem;">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h4 class="h5 fw-bold mb-2">2. Quality & Authenticity</h4>
+                    <p class="small text-muted mb-0">
+                        Sellers provide condition disclosures and flaw mappings. Buyers inspect AI deal ratings before committing to either permanent purchase or event rental.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <div class="p-4 rounded-4 bg-light border text-center h-100">
+                    <div class="stat-icon gold mx-auto mb-3" style="width: 56px; height: 56px; font-size: 1.6rem;">
+                        <i class="bi bi-calendar-range"></i>
+                    </div>
+                    <h4 class="h5 fw-bold mb-2">3. Flexible Rental & Booking</h4>
+                    <p class="small text-muted mb-0">
+                        Need a tuxedo, evening gown, or trench coat for a weekend? Select rental dates, pay daily rates with protected security deposits, and enjoy zero closet clutter.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <div class="p-4 rounded-4 bg-light border text-center h-100">
+                    <div class="stat-icon eco mx-auto mb-3" style="width: 56px; height: 56px; font-size: 1.6rem;">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </div>
+                    <h4 class="h5 fw-bold mb-2">4. Seamless Return & Circularity</h4>
+                    <p class="small text-muted mb-0">
+                        Use prepaid shipping labels to return rental garments. Deposits are refunded instantly upon inspection, and users earn Eco-Points for sustainable clothing reuse.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Rental Spotlight Callout -->
+<section class="py-5">
+    <div class="container">
+        <div class="p-5 rounded-4 bg-dark text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #090d16 0%, #1e293b 100%);">
+            <div class="row align-items-center g-4 position-relative" style="z-index: 2;">
+                <div class="col-lg-7">
+                    <span class="badge bg-warning text-dark fw-bold text-uppercase px-3 py-2 rounded-pill mb-3">
+                        <i class="bi bi-stars"></i> Save up to 90% vs Buying New
+                    </span>
+                    <h2 class="display-6 fw-bold text-white mb-3">
+                        Why Buy What You Will Only Wear Once?
+                    </h2>
+                    <p class="text-white-50 mb-4 fs-6">
+                        Rent designer gowns, bespoke tuxedos, and statement outerwear for weddings, galas, and trips. Return when you're done with doorstep courier pickup.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="{{ url_for('marketplace', mode='rent') }}" class="btn btn-eco px-4 py-3">
+                            <i class="bi bi-calendar-check me-1"></i> Browse Designer Rentals
+                        </a>
+                        <a href="{{ url_for('sell') }}" class="btn btn-outline-light px-4 py-3 rounded-pill">
+                            <i class="bi bi-coin me-1"></i> Rent Out Your Wardrobe
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="row g-3">
+                        {% for item in rental_highlights[:2] %}
+                        <div class="col-6">
+                            <div class="card border-0 rounded-4 overflow-hidden shadow">
+                                <img src="{{ item.primary_image }}" alt="{{ item.title }}" class="card-img-top" style="height: 180px; object-fit: cover;">
+                                <div class="card-body p-3 bg-white text-dark">
+                                    <div class="small fw-bold text-truncate">{{ item.title }}</div>
+                                    <div class="text-primary fw-bold small mt-1">${{ "%.2f"|format(item.rental_price_per_day) }}/day</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const calcBtn = document.getElementById('btn-quick-evaluate');
+    if (calcBtn) {
+        calcBtn.addEventListener('click', async () => {
+            calcBtn.disabled = true;
+            calcBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Calculating...';
+
+            const brand = document.getElementById('quick_brand').value;
+            const category = document.getElementById('quick_category').value;
+            const original_price = parseFloat(document.getElementById('quick_original_price').value) || 500;
+            const age_months = parseInt(document.getElementById('quick_age').value) || 12;
+            const condition = document.getElementById('quick_condition').value;
+
+            const res = await requestAiEstimation({
+                brand, category, original_price, age_months, condition
+            });
+
+            calcBtn.disabled = false;
+            calcBtn.innerHTML = '<i class="bi bi-cpu me-1"></i> Calculate Fair Price';
+
+            if (res) {
+                document.getElementById('quick_resale_val').textContent = `$${res.fair_resale_price.toFixed(2)}`;
+                document.getElementById('quick_rental_val').textContent = `$${res.daily_rental_rate.toFixed(2)} / day`;
+                document.getElementById('quick_eco_val').innerHTML = `<i class="bi bi-tree"></i> ${res.co2_saved_kg} kg CO₂ saved`;
+                document.getElementById('quick-result-box').style.display = 'block';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
